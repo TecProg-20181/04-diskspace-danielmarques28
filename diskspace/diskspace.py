@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+from contracts import contract, new_contract
 
 import argparse
 import os
@@ -35,11 +36,15 @@ args = parser.parse_args()
 
 
 # ==== Disk Space ====
-
+new_contract('valid_string', lambda s: isinstance(s, str) and len(s) > 0)
+@contract(command='valid_string', returns='valid_string')
 def subprocess_check_output(command):
     return subprocess.check_output(command.strip().split(' '))
 
 
+new_contract('valid_byte', lambda s: '{}{}'.format(s[len(s)-2], s[len(s)-1])
+    in ['B', 'Kb', 'Mb', 'Gb', 'Tb'])
+@contract(blocks='int,>0', returns='valid_string,valid_byte')
 def bytes_to_readable(blocks):
     byts = blocks * 512
     readable_bytes = byts
@@ -52,6 +57,10 @@ def bytes_to_readable(blocks):
     return '{:.2f}{}'.format(round(byts/(1024.0**count), 2), labels[count])
 
 
+new_contract('valid_dict', lambda d: bool(d))
+@contract(file_tree='valid_dict', file_tree_node='valid_dict',
+          path='valid_string', largest_size='int,>0',
+          total_size='int,>0', depth='int')
 def print_tree(file_tree, file_tree_node, path, largest_size, total_size,
                depth=0):
     percentage = int(file_tree_node['size'] / float(total_size) * 100)
@@ -72,6 +81,7 @@ def print_tree(file_tree, file_tree_node, path, largest_size, total_size,
                        total_size, depth + 1)
 
 
+@contract(directory='valid_string', depth='int', order='bool')
 def show_space_list(directory='.', depth=-1, order=True):
     abs_directory = os.path.abspath(directory)
 
